@@ -30,6 +30,8 @@ DeepActiveCRISPR is a deep learning based prediction model for sgRNA on-target e
     |- ontar_raw_cnn_finetune_freeze.py 		
     |- ontar_raw_cnn_pretrain.py 				
     |- ontar_raw_cnn_transfer.py 				
+  |-premodel
+    |  pre-trained model
 |-gradient
   |-active
     |  active learning on GradientBoost classifier
