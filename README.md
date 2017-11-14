@@ -6,9 +6,9 @@ DeepActiveCRISPR is a deep learning based prediction model for sgRNA on-target e
 
 ## Requirement
 
-* python == 
-* tensorflow == 
-* sonnet == 
+* python == 3.6
+* tensorflow == 1.3.0 
+* sonnet == 1.9
 
 ## Directory Structure:
 
@@ -45,43 +45,43 @@ DeepActiveCRISPR is a deep learning based prediction model for sgRNA on-target e
 
 #### 1.1 ontar_raw_cnn_finetune_freeze.py
 
-¡¡¡¡* Train your own CNN model based on our pre-trained model.
+ã€€ã€€* Train your own CNN model based on our pre-trained model.
 
-¡¡¡¡* Freeze several layers of the neural network while training (you can change the specific settings manually).
+ã€€ã€€* Freeze several layers of the neural network while training (you can change the specific settings manually).
 
-¡¡¡¡* Do not forget to change the file path before executing.
+ã€€ã€€* Do not forget to change the file path before executing.
 
 #### 1.2 ontar_raw_cnn_finetune.py
 
-¡¡¡¡* Train your own CNN model based on our pre-trained model.
+ã€€ã€€* Train your own CNN model based on our pre-trained model.
 
-¡¡¡¡* Will fine-tune all layers of the neural network.
+ã€€ã€€* Will fine-tune all layers of the neural network.
 
-¡¡¡¡* Do not forget to change the file path before executing.
+ã€€ã€€* Do not forget to change the file path before executing.
 
 #### 1.3 ontar_raw_cnn_pretrain.py
 
-¡¡¡¡* Train and save your own pre-trained model.
+ã€€ã€€* Train and save your own pre-trained model.
 
 #### 1.4 ontar_raw_cnn_transfer.py
 
-¡¡¡¡* Test the performance of plain transfer training (Training on dataset A while testing on dataset B).
+ã€€ã€€* Test the performance of plain transfer training (Training on dataset A while testing on dataset B).
 
 ### 2. Active Learning
 
 #### 2.1 active_cnn.py
 
-¡¡¡¡* Train your own CNN model based on our pre-trained model.
+ã€€ã€€* Train your own CNN model based on our pre-trained model.
 
-¡¡¡¡* Using active learning technique to select the most valuable training data during each fine-tune process.
+ã€€ã€€* Using active learning technique to select the most valuable training data during each fine-tune process.
 
-¡¡¡¡* You can change the parameters of active learning algorithm manually.
+ã€€ã€€* You can change the parameters of active learning algorithm manually.
 
 #### 2.2 randomselect_cnn.py
 
-¡¡¡¡* Train your own CNN model based on our pre-trained model.
+ã€€ã€€* Train your own CNN model based on our pre-trained model.
 
-¡¡¡¡* Randomly select training data during each fine-tune process in order to compare the performance.
+ã€€ã€€* Randomly select training data during each fine-tune process in order to compare the performance.
 
 ### 3. Data type
 
