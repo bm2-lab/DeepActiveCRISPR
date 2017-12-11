@@ -41,9 +41,10 @@ b=8                    #num of elements added to labeled set each iteration
 #lD=1                    #weight of Entropy
 #lE=1                    #weight of Diversity
 
-LOGDIR='/home/ibm/Documents/active/code/cnn/active/log/'+LFILE+'_'+str(lD)+'_'+str(lE)+'_log.txt'
-LFILE='/home/ibm/Documents/active/code/dataset/'+LFILE
-BMODEL='/home/ibm/Documents/active/code/premodel/'+BMODEL
+HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
+LOGDIR='/home/ibm/Documents/log/'+LFILE+'_random_log.txt'
+LFILE=HOMEPATH+'dataset/'+LFILE
+BMODEL=HOMEPATH+'cnn/premodel/'+BMODEL
 
 def print2f(MSG):
     print(MSG)
@@ -76,7 +77,7 @@ fRNA=np.zeros((LCNT,1,23,4))
 label=np.zeros((LCNT,2))
 for line in ff:
     f=line.split('\t')
-    label[idx][int(f[5])]=1
+    label[idx][int(f[1])]=1
     fRNA[idx][0]=Ronehot(f[0])
     idx+=1
 

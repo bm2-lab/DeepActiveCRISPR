@@ -178,7 +178,7 @@ for j in range(0,4):
         label=np.zeros((LCNT,2))
         for line in ff:
             f=line.split('\t')
-            label[idx][int(f[5])]=1
+            label[idx][int(f[1])]=1
             fRNA[idx][0]=Ronehot(f[0])
             idx+=1
 

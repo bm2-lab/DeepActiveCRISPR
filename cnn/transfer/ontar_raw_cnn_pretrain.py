@@ -164,12 +164,13 @@ def Ronehot(seq):
 
 BF=['ex_hct116_14843.episgt', 'ex_hek293t_14416.episgt', 'ex_hela_10981.episgt', 'ex_hl60_17006.episgt']
 BC=[14843,14416,10981,17006]
+HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
 
 for ii in range(0,4):
-    BFILE=BF[ii]
     BCNT=BC[ii]
-    model_path = '/home/ibm/Documents/active/code/premodel/'+BFILE+'_model.ckpt'
-    BFILE='/home/ibm/Documents/active/code/dataset/'+BFILE
+    BFILE=BF[ii]
+    model_path = HOMEPATH+'cnn/premodel/'+BFILE+'_model.ckpt'
+    BFILE=HOMEPATH+'dataset/'+BFILE
 
     ff=open(BFILE,'r')
     idx=0
@@ -177,7 +178,7 @@ for ii in range(0,4):
     y_train=np.zeros((BCNT,2))
     for line in ff:
         f=line.split('\t')
-        y_train[idx][int(f[5])]=1
+        y_train[idx][int(f[1])]=1
         X_train[idx][0]=Ronehot(f[0])
         idx+=1
 

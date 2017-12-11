@@ -162,12 +162,13 @@ def Ronehot(seq):
 LF=['hct116.episgt','hek293t.episgt','hela.episgt','hl60.episgt']
 LC=[4239,4666,8101,2076]
 BMODEL=['ex_hct116_14843.episgt_model.ckpt', 'ex_hek293t_14416.episgt_model.ckpt', 'ex_hela_10981.episgt_model.ckpt', 'ex_hl60_17006.episgt_model.ckpt']
+HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
 
 for ii in range(0,4):
     LFILE=LF[ii]
     LCNT=LC[ii]
-    LFILE='/home/ibm/Documents/active/code/dataset/'+LFILE
-    model_path='/home/ibm/Documents/active/code/premodel/'+BMODEL[ii]
+    LFILE=HOMEPATH+'dataset/'+LFILE
+    model_path=HOMEPATH+'cnn/premodel/'+BMODEL[ii]
 
     ff=open(LFILE,'r')
     idx=0
@@ -175,7 +176,7 @@ for ii in range(0,4):
     label=np.zeros((LCNT,2))
     for line in ff:
         f=line.split('\t')
-        label[idx][int(f[5])]=1
+        label[idx][int(f[1])]=1
         fRNA[idx][0]=Ronehot(f[0])
         idx+=1
 
