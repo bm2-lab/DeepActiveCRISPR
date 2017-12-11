@@ -7,6 +7,7 @@ from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 import csv
 from sklearn.ensemble import GradientBoostingClassifier
+import matplotlib.pyplot as plt 
 
 CHARS = 'ACGT'
 CHARS_COUNT = len(CHARS)
@@ -210,6 +211,9 @@ for ii in range(0,4):
     num_examples = np.shape(y_train)[0]
     i_iter=0
     num_iter = (num_examples/batch_size) * num_epochs 
+    ACC=[]
+    ITR=[]
+    LAB=[]
 
     for i in tqdm(range(i_iter, num_iter)):
         images, labels = trainDat.next_batch(batch_size)
@@ -222,6 +226,9 @@ for ii in range(0,4):
                 acc=sess.run([accuracy], feed_dict={inputs_l: X_test, outputs: y_test, training: False})
                 log_i = [epoch_n] + [acc]
                 train_log_w.writerow(log_i)
+                auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
+                ACC.append(auc_test)
+                ITR.append(epoch_n)
 
     print ('finetune:', LFILE, np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test))
     print (sess.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))
@@ -229,3 +236,15 @@ for ii in range(0,4):
     auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
     print(auc_test)
     print("----------------------------")
+    
+    plt.ion()
+    plt.figure()
+    plt.plot(ITR,ACC,'r')
+    #plt.plot(LAB,ACC,'b*')
+    plt.xlabel('epoch')
+    plt.ylabel('AUC')
+    plt.ylim(0.5,1.0)
+    plt.title(LFILE)
+    
+plt.ioff()
+plt.show()

@@ -8,6 +8,7 @@ from sklearn.metrics import roc_auc_score
 import csv
 from sklearn.ensemble import GradientBoostingClassifier
 import pdb
+import matplotlib.pyplot as plt 
 
 CHARS = 'ACGT'
 CHARS_COUNT = len(CHARS)
@@ -179,7 +180,7 @@ LC=[4239,4666,8101,2076]
 BMODEL=['ex_hct116_14843.episgt_model.ckpt', 'ex_hek293t_14416.episgt_model.ckpt', 'ex_hela_10981.episgt_model.ckpt', 'ex_hl60_17006.episgt_model.ckpt']
 HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
 
-for ii in range(3,4):
+for ii in range(0,4):
     LFILE=LF[ii]
     LCNT=LC[ii]
     LFILE=HOMEPATH+'dataset/'+LFILE
@@ -227,6 +228,9 @@ for ii in range(3,4):
     num_examples = np.shape(y_train)[0]
     i_iter=0
     num_iter = (num_examples/batch_size) * num_epochs 
+    ACC=[]
+    ITR=[]
+    LAB=[]
 
     for i in tqdm(range(i_iter, num_iter)):
         images, labels = trainDat.next_batch(batch_size)
@@ -239,6 +243,9 @@ for ii in range(3,4):
                 acc=sess.run([accuracy], feed_dict={inputs_l: X_test, outputs: y_test, training: False})
                 log_i = [epoch_n] + [acc]
                 train_log_w.writerow(log_i)
+                auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
+                ACC.append(auc_test)
+                ITR.append(epoch_n)
 
     print ('finetune:', LFILE, np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test))
     print (sess.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))
@@ -246,3 +253,15 @@ for ii in range(3,4):
     auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
     print(auc_test)
     print("----------------------------")
+    
+    plt.ion()
+    plt.figure()
+    plt.plot(ITR,ACC,'r')
+    #plt.plot(LAB,ACC,'b*')
+    plt.xlabel('epoch')
+    plt.ylabel('AUC')
+    plt.ylim(0.5,1.0)
+    plt.title(LFILE)
+    
+plt.ioff()
+plt.show()
