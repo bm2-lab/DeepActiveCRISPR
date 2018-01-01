@@ -22,7 +22,6 @@ DeepActiveCRISPR is a deep learning based prediction model for sgRNA on-target e
   |-classifier
     |  original CNN classifier
     |- ontar_raw_cnn.py 						
-    |- ontar_raw_cnn_epi.py 					
     |- ontar_raw_cnn_mixed_t.py 				
   |-transfer
     |  fine-tune CNN classifier
@@ -86,6 +85,6 @@ DeepActiveCRISPR is a deep learning based prediction model for sgRNA on-target e
 ### 3. Data type
 
 ```
-CGGTAGAAGCAGGTAGTCTGGGG	AAAANNNNNNNNNNNNNNNNNNN	AAAAAAAAAAAAAAAAAAAAAAA	AAAAAAAAAAAAAAAAAAAAAAA	NNNNNNNNNNNNNNNNNNNNNNN	1
-DNA sequence --- Epigenetic Sequence(not used yet) --- efficacy(0 or 1)  
+CGGTAGAAGCAGGTAGTCTGGGG	1
+DNA sequence --- efficacy(0 or 1)  
 ```
