@@ -7,6 +7,7 @@ from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 import csv
 from sklearn.ensemble import GradientBoostingClassifier
+import matplotlib.pyplot as plt 
 
 CHARS = 'ACGT'
 CHARS_COUNT = len(CHARS)
@@ -138,6 +139,7 @@ sig_l = tf.squeeze(hl_last)[:, 1]
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=outputs, logits=logits_l))
 
 eta = 0.01
+decay_after = 10  # epoch after which to begin learning rate decay
 learning_rate = tf.Variable(eta, trainable=False)
 with tf.control_dependencies(tf.get_collection('update_ops')):
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -151,14 +153,6 @@ def Ronehot(seq):
     for ii, char in enumerate(CHARS):
         res[ii*seqlen:(ii+1)*seqlen][arr == char] = 1
     ms=res.reshape(4,seqlen).T
-    # ap=np.zeros((4,23))
-    # for i in range(1,5):
-    #     ap[i-1]=Oonehot(f[i])
-    # ap=ap.T
-    # for i in range(0,23):
-    #     for j in range(0,4):
-    #         ms[i][j+4]=ap[i][j]
-    # ms=ms.reshape(1,seqlen*8)
     return ms
 
 LF=['hct116.episgt','hek293t.episgt','hela.episgt','hl60.episgt']
@@ -167,8 +161,12 @@ LC=[4239,4666,8101,2076]
 for ii in range(0,4):
     LFILE=LF[ii]
     LCNT=LC[ii]
+    '''
+    LFILE: dataset file
+    LCNT:  num of sequences in the file
+    '''
 
-    ff=open(LFILE,'r')
+    ff=open('../../dataset/'+LFILE,'r')
     idx=0
     fRNA=np.zeros((LCNT,1,23,4))
     label=np.zeros((LCNT,2))
@@ -177,6 +175,10 @@ for ii in range(0,4):
         label[idx][int(f[1])]=1
         fRNA[idx][0]=Ronehot(f[0])
         idx+=1
+    '''
+    fRNA:  one-hot representation of a DNA sequence
+    label: label of the sequence
+    '''
 
     X_train, X_test, y_train, y_test = train_test_split(fRNA, label, test_size=0.2, random_state=0, stratify = label)
 
@@ -192,59 +194,70 @@ for ii in range(0,4):
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    x_test=np.zeros((np.shape(X_test)[0],1,23,4))
-    i_cnt=0
-    for xx in X_test:
-        x_test[i_cnt][0]=xx
-        i_cnt+=1
-    print i_cnt
-
     prob=hl_last
     correct_prediction = tf.equal(tf.argmax(logits_l, 1), tf.argmax(outputs, 1))  
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float")) * tf.constant(100.0)
-    propred = sess.run(prob, feed_dict={inputs_l: x_test, training: False})
+    propred = sess.run(prob, feed_dict={inputs_l: X_test, training: False})
+
+    testcnt=0
+    prob=np.zeros((np.shape(y_test)[0],))
+    labl=np.zeros((np.shape(y_test)[0],))
+    for xx in propred:
+    	prob[testcnt]=xx[0][0][np.argmax(xx[0][0])]
+    	labl[testcnt]=np.argmax(y_test[testcnt])
+    	testcnt+=1
+    '''
+    prob:  predicted probability of the sequence in X_test
+    labl:  predicted label of the sequence in X_test
+    '''
+
+    AUC=[]
+    ACC=[]
+    ITR=[]
+    LOS=[]
+    LRT=[]
 
     for i in tqdm(range(i_iter, num_iter)):
         images, labels = trainDat.next_batch(batch_size)
         sess.run(train_op, feed_dict={inputs_l: images, outputs: labels, training: True})
         if (i > 1) and ((i+1) % (num_iter/num_epochs) == 0):
             epoch_n = i/(num_examples/batch_size)
+            if (epoch_n+1) >= decay_after:
+                # decay learning rate
+                # learning_rate = starter_learning_rate * ((num_epochs - epoch_n) / (num_epochs - decay_after))
+                ratio = 1.0 * (num_epochs - (epoch_n+1))  # epoch_n + 1 because learning rate is set for next epoch
+                ratio = max(0, ratio / (num_epochs - decay_after))
+                sess.run(learning_rate.assign(eta * ratio))
             with open('train_log', 'ab') as train_log:
                 # write test accuracy to file "train_log"
                 train_log_w = csv.writer(train_log)
                 acc=sess.run([accuracy], feed_dict={inputs_l: X_test, outputs: y_test, training: False})
+                los=sess.run([loss], feed_dict={inputs_l: X_test, outputs: y_test, training: False})
                 log_i = [epoch_n] + [acc]
                 train_log_w.writerow(log_i)
+                auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
+                AUC.append(auc_test)
+                ACC.append(acc[0]/100)
+                ITR.append(epoch_n)
+                LOS.append(los[0])
+                LRT.append(sess.run(learning_rate)*100)
 
-
-    testcnt=0
-    prob=np.zeros((np.shape(y_test)[0],))
-    labl=np.zeros((np.shape(y_test)[0],))
-    for xx in propred:
-    	#print (xx[0][0][0],xx[0][0][1],np.argmax(xx[0][0]),np.argmax(y_test[testcnt]))
-    	prob[testcnt]=xx[0][0][np.argmax(xx[0][0])]
-    	labl[testcnt]=np.argmax(y_test[testcnt])
-    	testcnt+=1
-    #print(prob)
-    #print(labl)
-    #print(np.shape(prob),np.shape(labl))
     print(LFILE, (np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test)))
     print (sess.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))
     auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
     print(auc_test)
 
-    # model_path='save/'+LFILE+'_model.ckpt'
-    # saver_path = saver.save(sess, model_path)
-    # print("Model saved in file:", saver_path)
-
-    # #probset=sess.run(sig_l, feed_dict={inputs_l: X_test, training: False})
-    # #print(probset[3])
-
-    # sess2 = tf.Session()
-    # init2 = tf.global_variables_initializer()
-    # sess2.run(init2)
-    # saver.restore(sess2,model_path)
-    # print (sess2.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))
-    # auc_test = roc_auc_score(labl, sess2.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
-    # print(auc_test)
     print('-------------------------------------')
+    plt.ion()
+    plt.figure()
+    plt.plot(ITR,AUC,'r')
+    plt.plot(ITR,ACC,'m')
+    plt.plot(ITR,LOS,'b')
+    plt.plot(ITR,LRT,'c')
+    plt.xlabel('epoch')
+    plt.ylabel('AUC')
+    plt.ylim(0.0,2.0)
+    plt.title(LFILE)
+    
+plt.ioff()
+plt.show()
