@@ -41,10 +41,9 @@ b=8                    #num of elements added to labeled set each iteration
 lD=0                    #weight of Entropy
 lE=1                    #weight of Diversity
 
-HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
-LOGDIR='/home/ibm/Documents/log/'+LFILE+'_'+str(lD)+'_'+str(lE)+'_log.txt'
-LFILE=HOMEPATH+'dataset/'+LFILE
-BMODEL=HOMEPATH+'cnn/premodel/'+BMODEL
+LOGDIR='./log/'+LFILE+'_'+str(lD)+'_'+str(lE)+'_log.txt'
+LFILE='../../dataset/'+LFILE
+BMODEL='../premodel/'+BMODEL
 
 def print2f(MSG):
     print(MSG)
@@ -282,10 +281,10 @@ testcnt=0
 prob=np.zeros((np.shape(y_test)[0],))
 labl=np.zeros((np.shape(y_test)[0],))
 for xx in propred:
-    #print (xx[0][0][0],xx[0][0][1],np.argmax(xx[0][0]),np.argmax(y_test[testcnt]))
     prob[testcnt]=xx[0][0][np.argmax(xx[0][0])]
     labl[testcnt]=np.argmax(y_test[testcnt])
     testcnt+=1
+
 #print(prob)
 #print(labl)
 print2f (('pre-train', BMODEL))

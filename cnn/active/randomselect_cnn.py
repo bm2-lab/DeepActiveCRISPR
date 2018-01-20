@@ -41,10 +41,9 @@ b=8                    #num of elements added to labeled set each iteration
 #lD=1                    #weight of Entropy
 #lE=1                    #weight of Diversity
 
-HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
-LOGDIR='/home/ibm/Documents/log/'+LFILE+'_random_log.txt'
-LFILE=HOMEPATH+'dataset/'+LFILE
-BMODEL=HOMEPATH+'cnn/premodel/'+BMODEL
+LOGDIR='./log/'+LFILE+'_random_log.txt'
+LFILE='../../dataset/'+LFILE
+BMODEL='../premodel/'+BMODEL
 
 def print2f(MSG):
     print(MSG)

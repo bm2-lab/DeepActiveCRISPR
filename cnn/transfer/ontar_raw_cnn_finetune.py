@@ -163,15 +163,18 @@ def Ronehot(seq):
 LF=['hct116.episgt','hek293t.episgt','hela.episgt','hl60.episgt']
 LC=[4239,4666,8101,2076]
 BMODEL=['ex_hct116_14843.episgt_model.ckpt', 'ex_hek293t_14416.episgt_model.ckpt', 'ex_hela_10981.episgt_model.ckpt', 'ex_hl60_17006.episgt_model.ckpt']
-HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
 
-for ii in range(0,4):
+for ii in range(0,1):
     LFILE=LF[ii]
     LCNT=LC[ii]
-    LFILE=HOMEPATH+'dataset/'+LFILE
-    model_path=HOMEPATH+'cnn/premodel/'+BMODEL[ii]
-
-    ff=open(LFILE,'r')
+    '''
+    LFILE:  dataset file used for finetune
+    LCNT:   num of sequences in the file
+    BMODEL: pre-trained model file
+    '''
+    
+    model_path='../premodel/'+BMODEL[ii]
+    ff=open('../../dataset/'+LFILE,'r')
     idx=0
     fRNA=np.zeros((LCNT,1,23,4))
     label=np.zeros((LCNT,2))
@@ -180,7 +183,11 @@ for ii in range(0,4):
         label[idx][int(f[1])]=1
         fRNA[idx][0]=Ronehot(f[0])
         idx+=1
-
+    '''
+    fRNA:  one-hot representation of a DNA sequence
+    label: label of the sequence
+    '''
+    
     X_train, X_test, y_train, y_test = train_test_split(fRNA, label, test_size=0.2, random_state=0, stratify = label)
 
     saver = tf.train.Saver()
