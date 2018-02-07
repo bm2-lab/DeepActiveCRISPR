@@ -139,7 +139,8 @@ sig_l = tf.squeeze(hl_last)[:, 1]
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=outputs, logits=logits_l))
 
-eta = 0.001
+eta = 0.00003
+decay_after = 10
 learning_rate = tf.Variable(eta, trainable=False)
 with tf.control_dependencies(tf.get_collection('update_ops')):
     # train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -178,15 +179,18 @@ def Ronehot(seq):
 LF=['hct116.episgt','hek293t.episgt','hela.episgt','hl60.episgt']
 LC=[4239,4666,8101,2076]
 BMODEL=['ex_hct116_14843.episgt_model.ckpt', 'ex_hek293t_14416.episgt_model.ckpt', 'ex_hela_10981.episgt_model.ckpt', 'ex_hl60_17006.episgt_model.ckpt']
-HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
 
 for ii in range(0,4):
     LFILE=LF[ii]
     LCNT=LC[ii]
-    LFILE=HOMEPATH+'dataset/'+LFILE
-    model_path=HOMEPATH+'cnn/premodel/'+BMODEL[ii]
-
-    ff=open(LFILE,'r')
+    '''
+    LFILE:  dataset file used for finetune
+    LCNT:   num of sequences in the file
+    BMODEL: pre-trained model file
+    '''
+    
+    model_path='../premodel/'+BMODEL[ii]
+    ff=open('../../dataset/'+LFILE,'r')
     idx=0
     fRNA=np.zeros((LCNT,1,23,4))
     label=np.zeros((LCNT,2))
@@ -203,6 +207,7 @@ for ii in range(0,4):
     init = tf.global_variables_initializer()
     sess.run(init)
     saver.restore(sess,model_path)
+    sess.run(learning_rate.assign(eta))
 
     #pdb.set_trace()
 
@@ -228,15 +233,23 @@ for ii in range(0,4):
     num_examples = np.shape(y_train)[0]
     i_iter=0
     num_iter = (num_examples/batch_size) * num_epochs 
-    ACC=[]
+
+    AUC=[]
     ITR=[]
-    LAB=[]
+    LRT=[]
+    LOS=[]
 
     for i in tqdm(range(i_iter, num_iter)):
         images, labels = trainDat.next_batch(batch_size)
         sess.run(train_op, feed_dict={inputs_l: images, outputs: labels, training: True})
         if (i > 1) and ((i+1) % (num_iter/num_epochs) == 0):
             epoch_n = i/(num_examples/batch_size)
+            if (epoch_n+1) >= decay_after:
+                # decay learning rate
+                # learning_rate = starter_learning_rate * ((num_epochs - epoch_n) / (num_epochs - decay_after))
+                ratio = 1.0 * (num_epochs - (epoch_n+1))  # epoch_n + 1 because learning rate is set for next epoch
+                ratio = max(0, ratio / (num_epochs - decay_after))
+                sess.run(learning_rate.assign(eta * ratio))
             with open('train_log', 'ab') as train_log:
                 # write test accuracy to file "train_log"
                 train_log_w = csv.writer(train_log)
@@ -244,8 +257,12 @@ for ii in range(0,4):
                 log_i = [epoch_n] + [acc]
                 train_log_w.writerow(log_i)
                 auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
-                ACC.append(auc_test)
+                los=sess.run([loss], feed_dict={inputs_l: X_test, outputs: y_test, training: False})
+                AUC.append(auc_test)
                 ITR.append(epoch_n)
+                LOS.append(los[0])
+                LRT.append(sess.run(learning_rate)*100)
+            #print(epoch_n,auc_test,sess.run(learning_rate))
 
     print ('finetune:', LFILE, np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test))
     print (sess.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))
@@ -256,11 +273,12 @@ for ii in range(0,4):
     
     plt.ion()
     plt.figure()
-    plt.plot(ITR,ACC,'r')
-    #plt.plot(LAB,ACC,'b*')
+    plt.plot(ITR,AUC,'r')
+    plt.plot(ITR,LOS,'b')
+    plt.plot(ITR,LRT,'c')
     plt.xlabel('epoch')
     plt.ylabel('AUC')
-    plt.ylim(0.5,1.0)
+    plt.ylim(0.0,2.0)
     plt.title(LFILE)
     
 plt.ioff()

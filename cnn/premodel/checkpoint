@@ -1,2 +1,2 @@
-model_checkpoint_path: "/home/ibm/Documents/active/code/premodel/ex_hl60_17006.episgt_model.ckpt"
-all_model_checkpoint_paths: "/home/ibm/Documents/active/code/premodel/ex_hl60_17006.episgt_model.ckpt"
+model_checkpoint_path: "ex_hl60_17006.episgt_model.ckpt"
+all_model_checkpoint_paths: "ex_hl60_17006.episgt_model.ckpt"

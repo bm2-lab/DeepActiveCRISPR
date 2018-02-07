@@ -138,7 +138,7 @@ sig_l = tf.squeeze(hl_last)[:, 1]
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=outputs, logits=logits_l))
 
-eta = 0.01
+eta = 0.00005
 learning_rate = tf.Variable(eta, trainable=False)
 with tf.control_dependencies(tf.get_collection('update_ops')):
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -172,7 +172,7 @@ for j in range(0,4):
         RFILE=LF[j]
         RCNT=LC[j]
 
-        ff=open(LFILE,'r')
+        ff=open('../../dataset/'+LFILE,'r')
         idx=0
         fRNA=np.zeros((LCNT,1,23,4))
         label=np.zeros((LCNT,2))
@@ -184,13 +184,13 @@ for j in range(0,4):
 
         X_train, __, y_train, _ = train_test_split(fRNA, label, test_size=0.2, random_state=0, stratify = label)
 
-        ff=open(RFILE,'r')
+        ff=open('../../dataset/'+RFILE,'r')
         idx=0
         fRNA=np.zeros((RCNT,1,23,4))
         label=np.zeros((RCNT,2))
         for line in ff:
             f=line.split('\t')
-            label[idx][int(f[5])]=1
+            label[idx][int(f[1])]=1
             fRNA[idx][0]=Ronehot(f[0])
             idx+=1
 

@@ -138,7 +138,7 @@ sig_l = tf.squeeze(hl_last)[:, 1]
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=outputs, logits=logits_l))
 
-eta = 0.01
+eta = 0.00005
 decay_after = 10  # epoch after which to begin learning rate decay
 learning_rate = tf.Variable(eta, trainable=False)
 with tf.control_dependencies(tf.get_collection('update_ops')):
@@ -241,6 +241,7 @@ for ii in range(0,4):
                 ITR.append(epoch_n)
                 LOS.append(los[0])
                 LRT.append(sess.run(learning_rate)*100)
+            #print(epoch_n,auc_test,sess.run(learning_rate))
 
     print(LFILE, (np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test)))
     print (sess.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))

@@ -15,25 +15,25 @@ import pdb
 
 
 #dataset
-#LFILE='hct116.episgt' 
-#LCNT=4239
+LFILE='hct116.episgt' 
+LCNT=4239
 #LFILE='hek293t.episgt' 
 #LCNT=4666
 #LFILE='hela.episgt' 
 #LCNT=8101
-LFILE='hl60.episgt'
-LCNT=2076
-#BMODEL='ex_hct116_14843.episgt_model.ckpt'
+#LFILE='hl60.episgt'
+#LCNT=2076
+BMODEL='ex_hct116_14843.episgt_model.ckpt'
 #BMODEL='ex_hek293t_14416.episgt_model.ckpt'
 #BMODEL='ex_hela_10981.episgt_model.ckpt'
-BMODEL='ex_hl60_17006.episgt_model.ckpt'
+#BMODEL='ex_hl60_17006.episgt_model.ckpt'
 
 #adjustable paramaters
 drawcolor = 'r'
 ##for CNN
 batch_size = 32         #batch size  
-num_epochs = 30         #num of epochs 
-start_eta = 0.01        #learning rate 
+num_epochs = 40         #num of epochs 
+start_eta = 0.00004        #learning rate 
 decay_lr = 1            #decay ratio of learning rate in each epoch
 ##for active learning
 alpha=1.0/4             #proportion of the patch used for majority selection
@@ -81,13 +81,13 @@ for line in ff:
     idx+=1
 
 X_train, X_test, y_train, y_test = train_test_split(fRNA, label, test_size=0.2, random_state=0, stratify = label)
-print2f((np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test)))
+print2f(('initial training/testing dataset: ', np.shape(X_train), np.shape(y_train), np.shape(X_test), np.shape(y_test)))
 
 inttrain_x=np.zeros((0,1,23,4))               #initial training set in active learning - X
 inttrain_y=np.zeros((0,2))                    #initial training set in active learning - y
 
-TRAINLEN=np.shape(X_train)[0]                 #size of training set     
-INTLEN=np.shape(inttrain_x)[0]
+TRAINLEN=np.shape(X_train)[0]                 #size of original training set     
+INTLEN=np.shape(inttrain_x)[0]                #size of active learning training set
 AUGLEN=TRAINLEN*16                            #size of augmented training set
 
 Uset=set()
@@ -101,7 +101,7 @@ for i in range(INTLEN,TRAINLEN):
 train_x=np.zeros((AUGLEN,1,23,4))             #augmented training set - X
 train_y=np.zeros((AUGLEN,2))                  #augmented training set - y
 train_l=np.zeros((AUGLEN,1))                  #augmented training set - label of each element
-patch=[set() for x in range(0,TRAINLEN)]
+patch=[set() for x in range(0,TRAINLEN)]      #patch[i] indicates the index of augmented sample ( for si in patch[i]: train_x[si] ) of original sample i ( X_train[i] )
 
 for i in range(0,TRAINLEN):
     sample=X_train[i][0].copy()
@@ -122,9 +122,15 @@ for i in range(0,TRAINLEN):
             R2[k]=0
         R1[j]=0
 
-print2f ((TRAINLEN,AUGLEN,INTLEN))
+print2f (('len of original trainging set=',TRAINLEN,' augmented training set=',AUGLEN,' active learning training set=',INTLEN))
 print2f ((np.shape(X_train)[0],np.shape(train_x)[0],np.shape(inttrain_x)[0]))
-print2f ((patch[1]))
+print2f ('')
+#print2f ('an example of augmented data:')
+#print2f (('original sample: ',X_train[1]))
+#for si in patch[1]:
+#    print2f((train_x[si],train_y[si],train_l[si]))
+#    print2f('')
+#print2f ((patch[1]))
 
 
 class DataSet(object):
@@ -256,8 +262,7 @@ with tf.control_dependencies(tf.get_collection('update_ops')):
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 
-
-###pre-training### using X_base,y_base -- X_test,y_test
+### load and test pre-trained model ### 
 saver = tf.train.Saver()
 model_path=BMODEL
 sess = tf.Session()
@@ -265,17 +270,9 @@ init = tf.global_variables_initializer()
 sess.run(init)
 saver.restore(sess,model_path)
 
-x_test=np.zeros((np.shape(X_test)[0],1,23,4))
-i_cnt=0
-for xx in X_test:
-    x_test[i_cnt][0]=xx
-    i_cnt+=1
-print2f(i_cnt)
-
-prob=hl_last
 correct_prediction = tf.equal(tf.argmax(logits_l, 1), tf.argmax(outputs, 1))  
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float")) * tf.constant(100.0)
-propred = sess.run(prob, feed_dict={inputs_l: x_test, training: False})
+propred = sess.run(hl_last, feed_dict={inputs_l: X_test, training: False})
 
 testcnt=0
 prob=np.zeros((np.shape(y_test)[0],))
@@ -287,18 +284,13 @@ for xx in propred:
 
 #print(prob)
 #print(labl)
-print2f (('pre-train', BMODEL))
+print2f (('pre-trained model: ', BMODEL))
 print2f (sess.run(accuracy, feed_dict={inputs_l: X_test, outputs: y_test, training: False}))
 auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_test, training: False}))
 print2f(auc_test)
+print2f('')
 
-
-# clf = GradientBoostingClassifier().fit(inttrain_x, inttrain_y)
-# print (("init: ",clf.score(X_test, y_test)))
-# clf2 = GradientBoostingClassifier().fit(X_train, y_train)
-# print (("complete: ",clf2.score(X_test, y_test)))
-
-
+### incrementally fine-tune CNN via actively selected samples ### 
 eps=np.spacing(1)
 ITER=int(TRAINLEN/b)
 patchsize=16
@@ -307,20 +299,21 @@ ACC=[]
 ITR=[]
 LAB=[]
 
-for IT in range(0,ITER):
+for IT in range(0,ITER):                            #for each iter, add b samples into labeled set 
     if(INTLEN+b>TRAINLEN):
         print2f(("OUT OF RANGE "))
         break
     Ulen=len(Uset)
     Rm=[]
-    for x in Uset:		                            #sample x in unlabeled pool
+    for x in Uset:                                  #for each sample x in unlabeled set, calculate its Entropy and Diversity
         meanpred=0.0
         pn=0
-        patch_x=np.zeros((16,1,23,4))
-        for xp in patch[x]:	                        #patch(all augmented items) of x
+        patch_x=np.zeros((16,1,23,4))               #patch_x[] collects all augmented items of sample x
+        for xp in patch[x]:
             patch_x[pn]=train_x[xp]
             pn+=1
-        predpatch=sess.run(sig_l, feed_dict={inputs_l: patch_x, training: False})
+        predvec=sess.run(tf.squeeze(hl_last), feed_dict={inputs_l: patch_x, training: False})
+        predpatch=np.amax(predvec,axis=1)
         meanpred=sum(predpatch)
         meanpred/=patchsize
         predpatch.sort()
@@ -366,10 +359,9 @@ for IT in range(0,ITER):
     i_iter=0
     num_iter = (num_examples/batch_size) * num_epochs 
 
-    prob=hl_last
     correct_prediction = tf.equal(tf.argmax(logits_l, 1), tf.argmax(outputs, 1))  
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float")) * tf.constant(100.0)
-    propred = sess.run(prob, feed_dict={inputs_l: x_test, training: False})
+    propred = sess.run(hl_last, feed_dict={inputs_l: X_test, training: False})
 
     #eta=start_eta
     #sess.run(learning_rate.assign(eta))
@@ -381,14 +373,14 @@ for IT in range(0,ITER):
         if (i > 1) and ((i+1) % (num_iter/num_epochs) == 0):
             epoch_n = i/(num_examples/batch_size)
 
-    testcnt=0
-    prob=np.zeros((np.shape(y_test)[0],))
-    labl=np.zeros((np.shape(y_test)[0],))
-    for xx in propred:
-        #print (xx[0][0][0],xx[0][0][1],np.argmax(xx[0][0]),np.argmax(y_test[testcnt]))
-        prob[testcnt]=xx[0][0][np.argmax(xx[0][0])]
-        labl[testcnt]=np.argmax(y_test[testcnt])
-        testcnt+=1
+    #testcnt=0
+    #prob=np.zeros((np.shape(y_test)[0],))
+    #labl=np.zeros((np.shape(y_test)[0],))
+    #for xx in propred:
+    #    #print (xx[0][0][0],xx[0][0][1],np.argmax(xx[0][0]),np.argmax(y_test[testcnt]))
+    #    prob[testcnt]=xx[0][0][np.argmax(xx[0][0])]
+    #    labl[testcnt]=np.argmax(y_test[testcnt])
+    #    testcnt+=1
     #print(prob)
     #print(labl)
     print2f (('finetune:', LFILE, np.shape(inttrain_x), np.shape(inttrain_y), np.shape(X_test), np.shape(y_test)))

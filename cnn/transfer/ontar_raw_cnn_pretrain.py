@@ -7,6 +7,7 @@ from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 import csv
 from sklearn.ensemble import GradientBoostingClassifier
+import matplotlib.pyplot as plt
 
 CHARS = 'ACGT'
 CHARS_COUNT = len(CHARS)
@@ -138,7 +139,7 @@ sig_l = tf.squeeze(hl_last)[:, 1]
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=outputs, logits=logits_l))
 
-eta = 0.01
+eta = 0.00005
 learning_rate = tf.Variable(eta, trainable=False)
 with tf.control_dependencies(tf.get_collection('update_ops')):
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -164,7 +165,7 @@ def Ronehot(seq):
 
 BF=['ex_hct116_14843.episgt', 'ex_hek293t_14416.episgt', 'ex_hela_10981.episgt', 'ex_hl60_17006.episgt']
 BC=[14843,14416,10981,17006]
-HOMEPATH='/media/ibm/73921A8E4C537417/code/active/git/DeepActiveCRISPR/'
+HOMEPATH='../../'
 
 for ii in range(0,4):
     BCNT=BC[ii]
@@ -184,7 +185,7 @@ for ii in range(0,4):
 
     trainDat=DataSet(X_train,y_train)
     batch_size = 32
-    num_epochs = 30
+    num_epochs = 100
     num_examples = np.shape(y_train)[0]
     i_iter=0
     num_iter = (num_examples/batch_size) * num_epochs 
@@ -197,12 +198,56 @@ for ii in range(0,4):
     prob=hl_last
     correct_prediction = tf.equal(tf.argmax(logits_l, 1), tf.argmax(outputs, 1))  
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float")) * tf.constant(100.0)
+    propred = sess.run(prob, feed_dict={inputs_l: X_train, training: False})
 
+    testcnt=0
+    prob=np.zeros((np.shape(y_train)[0],))
+    labl=np.zeros((np.shape(y_train)[0],))
+    for xx in propred:
+        prob[testcnt]=xx[0][0][np.argmax(xx[0][0])]
+        labl[testcnt]=np.argmax(y_train[testcnt])
+        testcnt+=1
+    '''
+    prob:  predicted probability of the sequence in X_test
+    labl:  predicted label of the sequence in X_test
+    '''
+
+    AUC=[]
+    ACC=[]
+    ITR=[]
+    LOS=[]
+    LRT=[]
+    
     for i in tqdm(range(i_iter, num_iter)):
         images, labels = trainDat.next_batch(batch_size)
         sess.run(train_op, feed_dict={inputs_l: images, outputs: labels, training: True})
         if (i > 1) and ((i+1) % (num_iter/num_epochs) == 0):
             epoch_n = i/(num_examples/batch_size)
+            los=sess.run([loss],feed_dict={inputs_l: X_train, outputs: y_train, training: False})
+            auc_test = roc_auc_score(labl, sess.run(sig_l, feed_dict={inputs_l: X_train, training: False}))
+            AUC.append(auc_test)
+            ITR.append(epoch_n)
+            LOS.append(los[0])
+            LRT.append(sess.run(learning_rate)*100)
+            print(epoch_n,auc_test,sess.run(learning_rate))
 
     saver_path = saver.save(sess, model_path)
     print("Model saved in file:", saver_path)
+
+    print('-------------------------------------')
+    plt.ion()
+    plt.figure()
+    plt.plot(ITR,AUC,'r')
+    plt.plot(ITR,LOS,'b')
+    plt.plot(ITR,LRT,'c')
+    plt.xlabel('epoch')
+    plt.ylabel('AUC')
+    plt.ylim(0.0,2.0)
+    plt.title(BFILE)
+    
+plt.ioff()
+plt.show()
+
+    
+
+
