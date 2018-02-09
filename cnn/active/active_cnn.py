@@ -15,16 +15,16 @@ import pdb
 
 
 #dataset
-LFILE='hct116.episgt' 
-LCNT=4239
-#LFILE='hek293t.episgt' 
-#LCNT=4666
+#LFILE='hct116.episgt' 
+#LCNT=4239
+LFILE='hek293t.episgt' 
+LCNT=4666
 #LFILE='hela.episgt' 
 #LCNT=8101
 #LFILE='hl60.episgt'
 #LCNT=2076
-BMODEL='ex_hct116_14843.episgt_model.ckpt'
-#BMODEL='ex_hek293t_14416.episgt_model.ckpt'
+#BMODEL='ex_hct116_14843.episgt_model.ckpt'
+BMODEL='ex_hek293t_14416.episgt_model.ckpt'
 #BMODEL='ex_hela_10981.episgt_model.ckpt'
 #BMODEL='ex_hl60_17006.episgt_model.ckpt'
 
@@ -33,13 +33,13 @@ drawcolor = 'r'
 ##for CNN
 batch_size = 32         #batch size  
 num_epochs = 40         #num of epochs 
-start_eta = 0.00004        #learning rate 
+start_eta = 0.00003     #learning rate 
 decay_lr = 1            #decay ratio of learning rate in each epoch
 ##for active learning
 alpha=1.0/4             #proportion of the patch used for majority selection
-b=8                    #num of elements added to labeled set each iteration 
-lD=0                    #weight of Entropy
-lE=1                    #weight of Diversity
+b=16                    #num of elements added to labeled set each iteration 
+lD=0.0                  #weight of Diversity
+lE=1.0                  #weight of Entropy
 
 LOGDIR='./log/'+LFILE+'_'+str(lD)+'_'+str(lE)+'_log.txt'
 LFILE='../../dataset/'+LFILE
@@ -134,14 +134,12 @@ print2f ('')
 
 
 class DataSet(object):
-
     def __init__(self, images, labels, fake_data=False):
         if fake_data:
             self._num_examples = 10000
         else:
             assert images.shape[0] == labels.shape[0], ("images.shape: %s labels.shape: %s" % (images.shape,labels.shape))
             self._num_examples = images.shape[0]
-
             # Convert shape from [num examples, rows, columns, depth]
             # to [num examples, rows*columns] (assuming depth == 1)
             #assert images.shape[3] == 1
@@ -153,23 +151,18 @@ class DataSet(object):
         self._labels = labels
         self._epochs_completed = 0
         self._index_in_epoch = 0
-
     @property
     def images(self):
         return self._images
-
     @property
     def labels(self):
         return self._labels
-
     @property
     def num_examples(self):
         return self._num_examples
-
     @property
     def epochs_completed(self):
         return self._epochs_completed
-
     def next_batch(self, batch_size, fake_data=False):
         """Return the next `batch_size` examples from this data set."""
         if fake_data:
@@ -312,8 +305,9 @@ for IT in range(0,ITER):                            #for each iter, add b sample
         for xp in patch[x]:
             patch_x[pn]=train_x[xp]
             pn+=1
-        predvec=sess.run(tf.squeeze(hl_last), feed_dict={inputs_l: patch_x, training: False})
-        predpatch=np.amax(predvec,axis=1)
+        # calculate predicted probabilities of the patch
+        predvec=sess.run(hl_last, feed_dict={inputs_l: patch_x, training: False})
+        predpatch=map(lambda a:max(a[0][0][0],a[0][0][1]),predvec)
         meanpred=sum(predpatch)
         meanpred/=patchsize
         predpatch.sort()

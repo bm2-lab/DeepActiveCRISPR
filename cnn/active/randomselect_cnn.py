@@ -33,7 +33,7 @@ drawcolor = 'b'
 ##for CNN
 batch_size = 32         #batch size  
 num_epochs = 40         #num of epochs 
-start_eta = 0.00005     #learning rate 
+start_eta = 0.00003     #learning rate 
 decay_lr = 1            #decay ratio of learning rate in each epoch
 ##for active learning
 #alpha=1.0/4             #proportion of the patch used for majority selection
