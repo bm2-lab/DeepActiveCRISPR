@@ -33,7 +33,7 @@ drawcolor = 'r'
 ##for CNN
 batch_size = 32         #batch size  
 num_epochs = 40         #num of epochs 
-start_eta = 0.00003     #learning rate 
+start_eta = 0.00010     #learning rate 
 decay_lr = 1            #decay ratio of learning rate in each epoch
 ##for active learning
 alpha=1.0/4             #proportion of the patch used for majority selection
@@ -306,8 +306,9 @@ for IT in range(0,ITER):                            #for each iter, add b sample
             patch_x[pn]=train_x[xp]
             pn+=1
         # calculate predicted probabilities of the patch
-        predvec=sess.run(hl_last, feed_dict={inputs_l: patch_x, training: False})
-        predpatch=map(lambda a:max(a[0][0][0],a[0][0][1]),predvec)
+        #predvec=sess.run(hl_last, feed_dict={inputs_l: patch_x, training: False})
+        #predpatch=map(lambda a:max(a[0][0][0],a[0][0][1]),predvec)
+        predpatch=sess.run(sig_l, feed_dict={inputs_l: patch_x, training: False})   #probability in predpatch means the probability of class ’1’
         meanpred=sum(predpatch)
         meanpred/=patchsize
         predpatch.sort()

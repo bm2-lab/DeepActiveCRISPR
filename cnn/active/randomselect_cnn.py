@@ -37,7 +37,7 @@ start_eta = 0.00003     #learning rate
 decay_lr = 1            #decay ratio of learning rate in each epoch
 ##for active learning
 #alpha=1.0/4             #proportion of the patch used for majority selection
-b=8                    #num of elements added to labeled set each iteration 
+b=16                     #num of elements added to labeled set each iteration 
 #lD=1                    #weight of Entropy
 #lE=1                    #weight of Diversity
 

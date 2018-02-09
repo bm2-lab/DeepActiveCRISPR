@@ -48,7 +48,7 @@ def Transfer(LFILE,LCNT,RFILE,RCNT):
     Llabel=np.zeros((LCNT,))
     for line in ff:
         f=line.split('\t')
-        if(int(f[5])==1):
+        if(int(f[1])==1):
             Llabel[idx]=1
         else:
             Llabel[idx]=-1
@@ -64,7 +64,7 @@ def Transfer(LFILE,LCNT,RFILE,RCNT):
     Rlabel=np.zeros((RCNT,))
     for line in ff:
         f=line.split('\t')
-        if(int(f[5])==1):
+        if(int(f[1])==1):
             Rlabel[idx]=1
         else:
             Rlabel[idx]=-1

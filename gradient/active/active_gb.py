@@ -50,21 +50,22 @@ def Ronehot(seq):
 #LCNT=2076
 #_,LFILE,LCNT=argv
 #LCNT=int(LCNT)
+LOGPATH='./log/'
 
 
-def ActLearning(LFILE,LCNT,alpha,b,lD,lE,color,idn):
+def ActLearning(LPATH,LFILE,LCNT,alpha,b,lD,lE,color,idn):
     def print2f(MSG):
-        lf=open(LFILE+'_out'+idn+'.txt','a')
+        lf=open(LOGPATH+LFILE+'_out'+idn+'_active.txt','a')
         print >> lf,MSG
         lf.close()
 
-    ff=open(LFILE,'r')
+    ff=open(LPATH+LFILE,'r')
     idx=0
     fRNA=np.zeros((LCNT,23*4))
     label=np.zeros((LCNT,))
     for line in ff:
         f=line.split('\t')
-        if(int(f[5])==1):
+        if(int(f[1])==1):
             label[idx]=1
         else:
             label[idx]=-1
