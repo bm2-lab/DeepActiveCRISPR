@@ -77,7 +77,7 @@ def Transfer(LFILE,LCNT,RFILE,RCNT):
     clf2 = GradientBoostingClassifier().fit(LfRNA, Llabel)
     print("train:",LFILE,"  test:",RFILE)
     print("train size:",np.shape(Llabel),"  test size:",np.shape(Rlabel))
-    print(clf2.score(RfRNA, Rlabel))
+    #print(clf2.score(RfRNA, Rlabel))
     pred=clf2.predict_proba(RfRNA)
     prob=np.zeros((np.shape(Rlabel)[0],))
     labl=np.zeros((np.shape(Rlabel)[0],))
