@@ -12,24 +12,23 @@ from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 import csv
 import pdb
+import sys
 
 
 #dataset
-#LFILE='hct116.episgt' 
-#LCNT=4239
-LFILE='hek293t.episgt' 
-LCNT=4666
-#LFILE='hela.episgt' 
-#LCNT=8101
-#LFILE='hl60.episgt'
-#LCNT=2076
-#BMODEL='ex_hct116_14843.episgt_model.ckpt'
-BMODEL='ex_hek293t_14416.episgt_model.ckpt'
-#BMODEL='ex_hela_10981.episgt_model.ckpt'
-#BMODEL='ex_hl60_17006.episgt_model.ckpt'
+_LFILE=['hct116.episgt','hek293t.episgt','hela.episgt','hl60.episgt']
+_LCNT=[4239,4666,8101,2076]
+_BMODEL=['ex_hct116_14843.episgt_model.ckpt',
+		'ex_hek293t_14416.episgt_model.ckpt',
+		'ex_hela_10981.episgt_model.ckpt',
+		'ex_hl60_17006.episgt_model.ckpt']
+DataNo=int(sys.argv[1])
+LFILE=_LFILE[DataNo]
+LCNT=_LCNT[DataNo]
+BMODEL=_BMODEL[DataNo]
+drawcolor='r'
 
 #adjustable paramaters
-drawcolor = 'r'
 ##for CNN
 batch_size = 32         #batch size  
 num_epochs = 40         #num of epochs 
@@ -38,8 +37,8 @@ decay_lr = 1            #decay ratio of learning rate in each epoch
 ##for active learning
 alpha=1.0/4             #proportion of the patch used for majority selection
 b=16                    #num of elements added to labeled set each iteration 
-lD=0.0                  #weight of Diversity
-lE=1.0                  #weight of Entropy
+lD=float(sys.argv[2])                  #weight of Diversity
+lE=float(sys.argv[3])                  #weight of Entropy
 
 LOGDIR='./log/'+LFILE+'_'+str(lD)+'_'+str(lE)+'_log.txt'
 LFILE='../../dataset/'+LFILE
@@ -313,10 +312,13 @@ for IT in range(0,ITER):                            #for each iter, add b sample
         meanpred/=patchsize
         predpatch.sort()
         plen=int(round(alpha*patchsize))
+        '''
         if(meanpred>0.5):
             Sp=predpatch[patchsize-plen:patchsize]
         else:
             Sp=predpatch[0:plen]
+        '''
+        Sp=predpatch[patchsize-plen:patchsize]
         Ex=0.0                                      #Entropy of x
         Dx=0.0                                      #Diversity of x
         for ip,p in enumerate(Sp):
@@ -337,6 +339,7 @@ for IT in range(0,ITER):                            #for each iter, add b sample
                     Ex-=(1-p)*np.log(1-p)
         Rsum=lD*Dx+lE*Ex
         Rm.append((Rsum,x))
+
     Rm=sorted(Rm,reversed_cmp)
     #pdb.set_trace()
     for x in range(0,b):
@@ -390,13 +393,19 @@ for IT in range(0,ITER):                            #for each iter, add b sample
     ITR.append(IT)
     LAB.append(len(Lset))
 
+print2f("______________data_______________")
+print2f("LFILE=")
+print2f(_LFILE[DataNo])
+print2f("LAB=")
+print2f(LAB)
+print2f("ACC=")
+print2f(ACC)
+
 plt.plot(LAB,ACC,drawcolor)
-#plt.plot(LAB,ACC,'b*')
+plt.plot(LAB,ACC,'b*')
 plt.xlabel('Num of labels')
 plt.ylabel('AUC')
 plt.ylim(0.5,1.0)
 plt.title(LFILE)
 plt.show()
-
-
 

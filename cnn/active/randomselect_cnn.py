@@ -13,23 +13,22 @@ from sklearn.metrics import roc_auc_score
 import csv
 import pdb
 import random
-
+import sys
+ 
 #dataset
-#LFILE='hct116.episgt' 
-#LCNT=4239
-LFILE='hek293t.episgt' 
-LCNT=4666
-#LFILE='hela.episgt' 
-#LCNT=8101
-#LFILE='hl60.episgt'
-#LCNT=2076
-#BMODEL='ex_hct116_14843.episgt_model.ckpt'
-BMODEL='ex_hek293t_14416.episgt_model.ckpt'
-#BMODEL='ex_hela_10981.episgt_model.ckpt'
-#BMODEL='ex_hl60_17006.episgt_model.ckpt'
+_LFILE=['hct116.episgt','hek293t.episgt','hela.episgt','hl60.episgt']
+_LCNT=[4239,4666,8101,2076]
+_BMODEL=['ex_hct116_14843.episgt_model.ckpt',
+        'ex_hek293t_14416.episgt_model.ckpt',
+        'ex_hela_10981.episgt_model.ckpt',
+        'ex_hl60_17006.episgt_model.ckpt']
+DataNo=int(sys.argv[1])
+LFILE=_LFILE[DataNo]
+LCNT=_LCNT[DataNo]
+BMODEL=_BMODEL[DataNo]
+drawcolor='c'
 
 #adjustable paramaters
-drawcolor = 'b'
 ##for CNN
 batch_size = 32         #batch size  
 num_epochs = 40         #num of epochs 
@@ -363,13 +362,22 @@ for IT in range(0,ITER):
     ITR.append(IT)
     LAB.append(len(Lset))
 
-plt.plot(LAB,ACC,drawcolor)
+#plt.plot(LAB,ACC,drawcolor)
 #plt.plot(LAB,ACC,'b*')
-plt.xlabel('Num of labels')
-plt.ylabel('AUC')
-plt.ylim(0.5,1.0)
-plt.title(LFILE)
-plt.show()
+#plt.xlabel('Num of labels')
+#plt.ylabel('AUC')
+#plt.ylim(0.5,1.0)
+#plt.title(LFILE)
+#plt.show()
+
+
+print2f("______________data_______________")
+print2f("LFILE=")
+print2f(_LFILE[DataNo])
+print2f("LAB=")
+print2f(LAB)
+print2f("ACC=")
+print2f(ACC)
 
 
 
