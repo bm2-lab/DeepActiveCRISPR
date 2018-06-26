@@ -362,13 +362,14 @@ for IT in range(0,ITER):
     ITR.append(IT)
     LAB.append(len(Lset))
 
-#plt.plot(LAB,ACC,drawcolor)
+plt.plot(LAB,ACC,drawcolor)
 #plt.plot(LAB,ACC,'b*')
-#plt.xlabel('Num of labels')
-#plt.ylabel('AUC')
-#plt.ylim(0.5,1.0)
-#plt.title(LFILE)
+plt.xlabel('Num of labels')
+plt.ylabel('AUC')
+plt.ylim(0.5,1.0)
+plt.title(LFILE)
 #plt.show()
+plt.savefig(LOGDIR.replace(".txt",".jpg"))
 
 
 print2f("______________data_______________")
